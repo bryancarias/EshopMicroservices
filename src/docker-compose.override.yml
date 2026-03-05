@@ -1,0 +1,66 @@
+services:
+  catalogdb:
+    container_name: catalogdb
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=NuevaClave123!v
+      - POSTGRES_DB=CatalogDb
+    restart: always
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_catalog:/var/lib/postgresql/data/
+
+  basketdb:
+    container_name: basketdb
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=BasketDb
+    restart: always
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_basket:/var/lib/postgresql/data/
+
+  distributedcache:
+    container_name: distributedcache
+    restart: always
+    ports:
+      - "6379:6379"
+
+  catalog.api:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__Database=Server=catalogdb;Port=5432;Database=CatalogDb;User Id=postgres;Password=NuevaClave123!v;Include Error Detail=true
+    depends_on:
+      - catalogdb
+    ports:
+      - "6060:8080"
+    volumes:
+      - ~/.microsoft/usersecrets:/home/app/.microsoft/usersecrets:rov
+
+  basket.api:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__Database=Server=basketdb;Port=5432;Database=BasketDb;User Id=postgres;Password=postgres;Include Error Detail=true
+      - ConnectionStrings__Redis=distributedcache:6379
+    depends_on:
+      - basketdb
+      - distributedcache
+    ports:
+      - "6061:8080"
+    volumes:
+      - ~/.microsoft/usersecrets:/home/app/.microsoft/usersecrets:ro
+
+  discount.grpc:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DOTNET_RUNNING_IN_CONTAINER=true
+      - ConnectionStrings__Database=Data Source=discountdb
+    ports:
+      - "6062:5052"
+    volumes:
+      - ~/.microsoft/usersecrets:/home/app/.microsoft/usersecrets:ro
