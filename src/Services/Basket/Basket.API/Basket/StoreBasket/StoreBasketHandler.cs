@@ -21,14 +21,14 @@ public class StoreBasketCommandHandler
 {
     public async Task<StoreBasketResult> Handle(StoreBasketCommand command, CancellationToken cancellationToken)
     {
-        // await DeductDiscount(command.Cart, cancellationToken);
+        await DeductDiscount(command.Cart, cancellationToken);
 
         await repository.StoreBasket(command.Cart, cancellationToken);
 
         return new StoreBasketResult(command.Cart.UserName);
     }
 
-    
+
     private async Task DeductDiscount(ShoppingCart cart, CancellationToken cancellationToken)
     {
         // Communicate with Discount.Grpc and calculate lastest prices of products into sc
